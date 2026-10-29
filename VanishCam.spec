@@ -12,6 +12,7 @@ resources = [
     (root / "models" / "selfie_segmenter_landscape.tflite", "models"),
     (root / "assets" / "substitution_log.png", "assets"),
     (root / "assets" / "vanish.MP3", "assets"),
+    (root / "assets" / "teleport.wav", "assets"),
 ]
 missing = [str(path) for path, _ in resources if not path.is_file()]
 if not icon_file.is_file():

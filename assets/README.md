@@ -12,3 +12,10 @@ For smoke, the app uses its own procedurally animated shapes in
 `naruto_effect.py`. A [CC0 smoke sprite sheet](https://opengameart.org/content/smoke-sprite-sheet)
 was reviewed but is not included because the procedural smoke scales and follows
 the detected person dynamically.
+
+# Teleport sound
+
+`teleport.wav` is an original sound synthesized with NumPy for Teleport mode: an
+exponential sine sweep from 300 to 1800 Hz with a soft noise whoosh, a short
+2.4 kHz click at the moment the person vanishes and a decaying high shimmer. No
+recorded or third-party audio is included.

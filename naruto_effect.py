@@ -187,3 +187,19 @@ def render_substitution(frame: np.ndarray, background: np.ndarray, mask: np.ndar
                 scale=1.15 - min(age, 0.25) * 0.6, cache=log_cache)
     _smoke_layer(output, anchor, age, foreground=True)
     return output
+
+
+def render_return(frame: np.ndarray, background: np.ndarray, mask: np.ndarray,
+                  sprite: np.ndarray, anchor: tuple[int, int, int], age: float,
+                  log_cache: dict[int, np.ndarray] | None = None) -> np.ndarray:
+    """Reverse substitution: smoke swallows the landed log and the person is back."""
+    person_alpha = mask * float(np.clip((age - 0.12) / 0.13, 0.0, 1.0))
+    output = (
+        frame.astype(np.float32) * person_alpha[:, :, None]
+        + background.astype(np.float32) * (1.0 - person_alpha[:, :, None])
+    ).astype(np.uint8)
+    _smoke_layer(output, anchor, age, foreground=False)
+    overlay_log(output, sprite, landed_log_anchor(anchor, output.shape[0]),
+                1.0 - min(1.0, age / 0.2), cache=log_cache)
+    _smoke_layer(output, anchor, age, foreground=True)
+    return output

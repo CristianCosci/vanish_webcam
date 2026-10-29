@@ -22,13 +22,23 @@ from mediapipe.tasks.python import vision
 try:
     from .naruto_effect import (
         EFFECT_SECONDS, joined_hands_from_landmarks, landed_log_anchor,
-        load_log, overlay_log, render_substitution, substitution_anchor,
+        load_log, overlay_log, render_return, render_substitution, substitution_anchor,
+    )
+    from .teleport_effect import (
+        HOLD_SECONDS, TELEPORT_GONE_AT, TELEPORT_SECONDS, TELEPORT_SOUND_PATH, PoseTimer,
+        fingers_on_forehead, forehead_from_keypoints, make_speed_lines, render_teleport,
+        two_fingers_score,
     )
     from .vanish_sound import SOUND_PATH, VanishSound
 except ImportError:
     from naruto_effect import (
         EFFECT_SECONDS, joined_hands_from_landmarks, landed_log_anchor,
-        load_log, overlay_log, render_substitution, substitution_anchor,
+        load_log, overlay_log, render_return, render_substitution, substitution_anchor,
+    )
+    from teleport_effect import (
+        HOLD_SECONDS, TELEPORT_GONE_AT, TELEPORT_SECONDS, TELEPORT_SOUND_PATH, PoseTimer,
+        fingers_on_forehead, forehead_from_keypoints, make_speed_lines, render_teleport,
+        two_fingers_score,
     )
     from vanish_sound import SOUND_PATH, VanishSound
 
@@ -40,6 +50,7 @@ WINDOW_NAME = "Webcam - Anteprima"
 SEGMENTER_MODEL = MODEL_DIR / "selfie_segmenter_landscape.tflite"
 GESTURE_MODEL = MODEL_DIR / "gesture_recognizer.task"
 HAND_MODEL = APP_DIR / "hand_landmarker.task"
+FACE_MODEL = MODEL_DIR / "blaze_face_short_range.tflite"
 
 MODEL_URLS = {
     SEGMENTER_MODEL: (
@@ -51,12 +62,23 @@ MODEL_URLS = {
         "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/"
         "gesture_recognizer/float16/1/gesture_recognizer.task"
     ),
+    FACE_MODEL: (
+        "https://storage.googleapis.com/mediapipe-models/face_detector/"
+        "blaze_face_short_range/float16/latest/blaze_face_short_range.tflite"
+    ),
+}
+MODE_MODELS = {
+    "normal": (SEGMENTER_MODEL, GESTURE_MODEL),
+    "naruto": (SEGMENTER_MODEL,),
+    "teleport": (SEGMENTER_MODEL, FACE_MODEL),
 }
 
 CALIBRATION_SECONDS = 4.0
 BACKGROUND_SAMPLE_SECONDS = 0.55
 VANISH_SECONDS = 3.6
 GESTURE_INTERVAL_SECONDS = 0.14
+RELEASE_SECONDS = 0.5
+FOREHEAD_MEMORY_MS = 1500
 
 
 @dataclass
@@ -64,8 +86,12 @@ class AppState:
     phase: str = "calibrating"
     calibration_started: float = 0.0
     vanish_started: float | None = None
+    reappear_started: float | None = None
     last_gesture_check: float = 0.0
     fullscreen: bool = False
+    # Dopo un gesto riuscito la mano va abbassata prima che il gesto valga di nuovo.
+    released: bool = True
+    absent_since: float | None = None
 
 
 def positive_fps(value: str) -> float:
@@ -77,7 +103,7 @@ def positive_fps(value: str) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Scegli Normal Vanish o Naruto Vanish per la webcam."
+        description="Scegli Normal Vanish, Naruto Vanish o Teletrasporto per la webcam."
     )
     parser.add_argument("--camera", type=int, default=0, help="Indice della webcam")
     parser.add_argument("--width", type=int, default=960, help="Larghezza video")
@@ -99,7 +125,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--virtual-device", help="Nome del dispositivo virtuale da usare")
     parser.add_argument(
-        "--mode", choices=("normal", "naruto"),
+        "--mode", choices=("normal", "naruto", "teleport"),
         help="Salta il menu iniziale e avvia direttamente la modalità scelta",
     )
     parser.add_argument(
@@ -114,13 +140,14 @@ def choose_mode() -> str | None:
     """Simple keyboard/mouse menu shown before the clean camera feed."""
     title = "Scegli effetto"
     selected = [None]
-    window = np.zeros((420, 700, 3), dtype=np.uint8)
+    window = np.zeros((540, 700, 3), dtype=np.uint8)
     window[:] = (26, 29, 34)
     cv2.putText(window, "SCEGLI IL TUO VANISH", (68, 88),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.85, (236, 239, 242), 2, cv2.LINE_AA)
     buttons = (
         ("normal", "1  NORMAL VANISH", "Segno a V  /  dissolvenza", 140),
         ("naruto", "2  NARUTO VANISH", "Mani unite  /  tronco e fumo", 260),
+        ("teleport", "3  TELETRASPORTO", "Due dita sulla fronte  /  linee e sparizione", 380),
     )
     for mode, heading, detail, top in buttons:
         cv2.rectangle(window, (65, top), (635, top + 94), (48, 54, 62), -1, cv2.LINE_AA)
@@ -146,6 +173,8 @@ def choose_mode() -> str | None:
                 selected[0] = "normal"
             elif key == ord("2"):
                 selected[0] = "naruto"
+            elif key == ord("3"):
+                selected[0] = "teleport"
             elif key in (ord("q"), 27):
                 return None
             if cv2.getWindowProperty(title, cv2.WND_PROP_VISIBLE) < 1:
@@ -191,7 +220,7 @@ def send_virtual_frame(camera, frame: np.ndarray) -> None:
 def download_models(mode: str = "normal") -> None:
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
     for destination, url in MODEL_URLS.items():
-        if mode == "naruto" and destination == GESTURE_MODEL:
+        if destination not in MODE_MODELS[mode]:
             continue
         if destination.exists() and destination.stat().st_size > 100_000:
             continue
@@ -242,14 +271,14 @@ def open_camera(index: int, width: int, height: int) -> cv2.VideoCapture:
     return capture
 
 
-def create_tasks(mode: str = "normal") -> tuple[vision.ImageSegmenter, MultiViewGestureRecognizer | MultiViewHandLandmarker]:
+def create_tasks(mode: str = "normal") -> tuple[vision.ImageSegmenter, MultiViewGestureRecognizer | MultiViewHandLandmarker | TeleportPoseDetector]:
     segmenter_options = vision.ImageSegmenterOptions(
         base_options=python.BaseOptions(model_asset_path=str(SEGMENTER_MODEL)),
         running_mode=vision.RunningMode.VIDEO,
         output_confidence_masks=True,
         output_category_mask=False,
     )
-    if mode == "naruto":
+    if mode in ("naruto", "teleport"):
         if not HAND_MODEL.is_file():
             raise RuntimeError(f"Modello delle mani non trovato: {HAND_MODEL}")
         options = vision.HandLandmarkerOptions(
@@ -278,14 +307,24 @@ def create_tasks(mode: str = "normal") -> tuple[vision.ImageSegmenter, MultiView
         )
         task_class = vision.GestureRecognizer
         wrapper_class = MultiViewGestureRecognizer
+    if mode == "teleport":
+        # Il volto serve solo a sapere dove si trova la fronte.
+        alternate_options = vision.FaceDetectorOptions(
+            base_options=python.BaseOptions(model_asset_path=str(FACE_MODEL)),
+            running_mode=vision.RunningMode.VIDEO,
+            min_detection_confidence=0.4,
+        )
+        alternate_class = vision.FaceDetector
+        wrapper_class = TeleportPoseDetector
+    else:
+        alternate_options = replace(options, running_mode=vision.RunningMode.IMAGE)
+        alternate_class = task_class
 
     segmenter = vision.ImageSegmenter.create_from_options(segmenter_options)
     try:
         primary = task_class.create_from_options(options)
         try:
-            alternate = task_class.create_from_options(
-                replace(options, running_mode=vision.RunningMode.IMAGE)
-            )
+            alternate = alternate_class.create_from_options(alternate_options)
         except Exception:
             primary.close()
             raise
@@ -600,6 +639,54 @@ class MultiViewHandLandmarker:
             self.alternate.close()
 
 
+class TeleportPoseDetector:
+    """Track fingers and forehead; remember the forehead while the hand covers it."""
+
+    def __init__(self, hands, faces):
+        self.hands = hands
+        self.faces = faces
+        self.forehead = None
+        self.forehead_seen_ms = -FOREHEAD_MEMORY_MS
+        self.last_report = "nessun dato"
+
+    def recognize_pose(self, image: mp.Image, timestamp_ms: int) -> bool:
+        faces = self.faces.detect_for_video(image, timestamp_ms)
+        if faces.detections:
+            # In call il volto più grande è quello di chi usa la webcam.
+            face = max(faces.detections,
+                       key=lambda item: item.bounding_box.width * item.bounding_box.height)
+            self.forehead = forehead_from_keypoints(face.keypoints, image.width, image.height)
+            self.forehead_seen_ms = timestamp_ms
+        elif timestamp_ms - self.forehead_seen_ms > FOREHEAD_MEMORY_MS:
+            self.forehead = None
+        result = self.hands.detect_for_video(image, timestamp_ms)
+        best = 0.0
+        for index, landmarks in enumerate(result.hand_landmarks):
+            pixels = np.array([(point.x * image.width, point.y * image.height, 0.0)
+                               for point in landmarks])
+            score = two_fingers_score(pixels)
+            if index < len(result.hand_world_landmarks):
+                world = np.array([(point.x, point.y, point.z)
+                                  for point in result.hand_world_landmarks[index]])
+                score = max(score, two_fingers_score(world))
+            best = max(best, score)
+            if score and self.forehead is not None and fingers_on_forehead(pixels, self.forehead):
+                self.last_report = f"mani={len(result.hand_landmarks)}, posa sulla fronte"
+                return True
+        self.last_report = (
+            f"mani={len(result.hand_landmarks)}, "
+            f"fronte={'trovata' if self.forehead is not None else 'non trovata'}, "
+            f"dita unite={best:.2f}"
+        )
+        return False
+
+    def close(self) -> None:
+        try:
+            self.hands.close()
+        finally:
+            self.faces.close()
+
+
 def recognize_gesture(
     recognizer: MultiViewGestureRecognizer,
     image: mp.Image,
@@ -612,19 +699,72 @@ def recognize_gesture(
 
 def start_vanish_on_gesture(state: AppState, name: str, score: float, now: float) -> bool:
     """Avvia la dissolvenza al primo riconoscimento affidabile della V."""
-    if state.phase == "ready" and name == "Victory" and score >= 0.62:
+    if state.phase == "ready" and state.released and name == "Victory" and score >= 0.62:
         state.phase = "vanishing"
         state.vanish_started = now
+        state.released = False
         return True
     return False
 
 
 def start_naruto_on_join(state: AppState, joined: bool, now: float) -> bool:
-    if state.phase == "ready" and joined:
+    if state.phase == "ready" and state.released and joined:
         state.phase = "naruto_vanishing"
         state.vanish_started = now
+        state.released = False
         return True
     return False
+
+
+def start_teleport_on_hold(state: AppState, held: float, now: float) -> bool:
+    """Il teletrasporto parte dopo aver tenuto la posa sulla fronte per HOLD_SECONDS."""
+    if state.phase == "ready" and state.released and held >= HOLD_SECONDS:
+        state.phase = "teleporting"
+        state.vanish_started = now
+        state.released = False
+        return True
+    return False
+
+
+def start_return_on_gesture(state: AppState, detected: bool, now: float) -> bool:
+    """Riappari ripetendo il gesto della modalità dopo aver abbassato la mano."""
+    if state.phase == "vanished" and state.released and detected:
+        state.phase = "reappearing"
+        state.reappear_started = now
+        state.released = False
+        return True
+    return False
+
+
+def track_release(state: AppState, detected: bool, now: float) -> None:
+    """Il gesto vale di nuovo solo dopo RELEASE_SECONDS senza vederlo."""
+    if detected:
+        state.absent_since = None
+    elif state.absent_since is None:
+        state.absent_since = now
+    elif now - state.absent_since >= RELEASE_SECONDS:
+        state.released = True
+
+
+def detect_mode_gesture(mode: str, recognizer, image: mp.Image, timestamp_ms: int) -> bool:
+    """Gesto della modalità presente nel fotogramma, senza avviare nulla."""
+    if mode == "normal":
+        name, score = recognize_gesture(recognizer, image, timestamp_ms)
+        return name == "Victory" and score >= 0.62
+    if mode == "naruto":
+        return recognizer.recognize_joined_hands(image, timestamp_ms)
+    return recognizer.recognize_pose(image, timestamp_ms)
+
+
+def report_hold(held: float, reported: bool) -> bool:
+    """Conto alla rovescia della posa solo nel terminale, mai sul video."""
+    if held > 0.0 and not reported:
+        print(f"[Teletrasporto] Posa riconosciuta: tienila per {HOLD_SECONDS:g} secondo.")
+        return True
+    if held == 0.0 and reported:
+        print("[Teletrasporto] Posa interrotta: il conteggio riparte.")
+        return False
+    return reported
 
 
 def set_fullscreen(enabled: bool) -> None:
@@ -670,7 +810,12 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
     resources.callback(segmenter.close)
     resources.callback(recognizer.close)
     log_sprite = load_log() if mode == "naruto" else None
-    vanish_sound = VanishSound() if mode == "naruto" else None
+    if mode == "naruto":
+        vanish_sound = VanishSound()
+    elif mode == "teleport":
+        vanish_sound = VanishSound(TELEPORT_SOUND_PATH)
+    else:
+        vanish_sound = None
     if vanish_sound is not None:
         resources.callback(vanish_sound.close)
     resources.callback(cv2.destroyAllWindows)
@@ -696,9 +841,16 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
     virtual_camera_initialized = False
     calibration_remaining = None
     last_gesture_report = 0.0
+    gesture_interval = GESTURE_INTERVAL_SECONDS if mode == "normal" else 0.08
+    speed_lines = make_speed_lines() if mode == "teleport" else None
+    pose_timer = PoseTimer()
+    pose_reported = False
     started = time.perf_counter()
     print("[Webcam] Esci dall'inquadratura per 4 secondi: acquisisco lo sfondo.")
     print("[Webcam] Comandi nella finestra: SPAZIO nuovo sfondo, R riappari, V svanisci, F fullscreen, Q esci.")
+    if mode == "teleport":
+        print(f"[Webcam] Teletrasporto: indice e medio uniti sulla fronte per {HOLD_SECONDS:g} secondo.")
+    print("[Webcam] Per riapparire abbassa la mano e ripeti il gesto.")
 
     try:
         while True:
@@ -753,14 +905,33 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
                         overlay_log(vanished_frame, log_sprite, landed_log_anchor(log_anchor, height),
                                     cache=log_cache)
                 display = vanished_frame
+                if now - state.last_gesture_check >= gesture_interval:
+                    # Il video resta fermo sullo sfondo, ma la webcam vede ancora la mano.
+                    state.last_gesture_check = now
+                    rgb = cv2.cvtColor(camera_frame, cv2.COLOR_BGR2RGB)
+                    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+                    detected = detect_mode_gesture(mode, recognizer, mp_image, elapsed_ms)
+                    if mode == "teleport":
+                        held = pose_timer.update(detected and state.released, now)
+                        pose_reported = report_hold(held, pose_reported)
+                        trigger = held >= HOLD_SECONDS
+                    else:
+                        trigger = detected
+                    if args.gesture_debug and now - last_gesture_report >= 1.0:
+                        detail = f", {recognizer.last_report}" if mode == "teleport" else ""
+                        print(f"[Ritorno] gesto={detected}, mano abbassata={state.released}{detail}")
+                        last_gesture_report = now
+                    if start_return_on_gesture(state, trigger, now):
+                        print("[Webcam] Gesto riconosciuto: riappari.")
+                        pose_timer, pose_reported = PoseTimer(), False
+                        if vanish_sound is not None:
+                            vanish_sound.play()
+                    else:
+                        track_release(state, detected, now)
 
             else:
                 mask = last_mask
-                if (
-                    state.phase == "ready"
-                    and now - state.last_gesture_check >=
-                    (0.08 if mode == "naruto" else GESTURE_INTERVAL_SECONDS)
-                ):
+                if state.phase == "ready" and now - state.last_gesture_check >= gesture_interval:
                     state.last_gesture_check = now
                     rgb = cv2.cvtColor(camera_frame, cv2.COLOR_BGR2RGB)
                     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
@@ -773,8 +944,9 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
                                 f"rotazione={recognizer.preferred_rotation or 0}"
                             )
                             last_gesture_report = now
-                        start_vanish_on_gesture(state, name, score, now)
-                    else:
+                        if not start_vanish_on_gesture(state, name, score, now):
+                            track_release(state, name == "Victory" and score >= 0.62, now)
+                    elif mode == "naruto":
                         joined = recognizer.recognize_joined_hands(mp_image, elapsed_ms)
                         if args.gesture_debug and now - last_gesture_report >= 1.0:
                             print(f"[Mani] rilevate={recognizer.last_hand_count}, "
@@ -782,13 +954,33 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
                             last_gesture_report = now
                         if start_naruto_on_join(state, joined, time.perf_counter()):
                             vanish_sound.play()
+                        else:
+                            track_release(state, joined, now)
+                    else:
+                        pose = recognizer.recognize_pose(mp_image, elapsed_ms)
+                        if args.gesture_debug and now - last_gesture_report >= 1.0:
+                            print(f"[Teletrasporto] {recognizer.last_report}")
+                            last_gesture_report = now
+                        held = pose_timer.update(pose and state.released, now)
+                        pose_reported = report_hold(held, pose_reported)
+                        if start_teleport_on_hold(state, held, now):
+                            vanish_sound.play()
+                            pose_timer, pose_reported = PoseTimer(), False
+                        else:
+                            track_release(state, pose, now)
 
-                if state.phase in ("vanishing", "naruto_vanishing"):
+                if state.phase in ("vanishing", "naruto_vanishing", "teleporting", "reappearing"):
                     # Normal dissolve tracks the silhouette at 20 Hz; Naruto
-                    # needs it only while the person is still visible.
+                    # needs it only while the person is still visible, the
+                    # teleport until the person is gone and the return always.
+                    live = state.phase == "reappearing" or (
+                        state.phase == "teleporting"
+                        and (mask is None or now - state.vanish_started < TELEPORT_GONE_AT)
+                    )
                     needs_mask = (
                         (mode == "normal" and (mask is None or now - last_mask_at >= 0.05))
                         or (mode == "naruto" and (log_anchor is None or now - state.vanish_started < 0.13))
+                        or (live and (mask is None or now - last_mask_at >= 0.05))
                     )
                     if needs_mask:
                         if mp_image is None:
@@ -800,12 +992,44 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
                     if mode == "naruto" and log_anchor is None:
                         log_anchor = substitution_anchor(mask)
 
-                if mode == "naruto" and state.phase == "naruto_vanishing":
+                if state.phase == "reappearing":
+                    age = now - state.reappear_started
+                    if mode == "naruto":
+                        display = render_return(
+                            camera_frame, background, mask, log_sprite, log_anchor, age, log_cache
+                        )
+                        finished = age >= EFFECT_SECONDS
+                    elif mode == "teleport":
+                        display = render_teleport(
+                            camera_frame, background, mask, speed_lines, age, arriving=True
+                        )
+                        finished = age >= TELEPORT_SECONDS
+                    else:
+                        progress = max(0.0, 1.0 - age / VANISH_SECONDS)
+                        display = apply_dissolve(
+                            camera_frame, background, mask, progress, dissolve_field, sparkle_noise
+                        )
+                        finished = progress <= 0.0
+                    if finished:
+                        state.phase = "ready"
+                        state.vanish_started = None
+                        state.reappear_started = None
+                        vanished_frame = None
+                        log_anchor = None
+                        last_mask = None
+                        last_mask_at = float("-inf")
+                elif mode == "naruto" and state.phase == "naruto_vanishing":
                     age = max(0.04, time.perf_counter() - state.vanish_started)
                     display = render_substitution(
                         camera_frame, background, mask, log_sprite, log_anchor, age, log_cache
                     )
                     if age >= EFFECT_SECONDS:
+                        state.phase = "vanished"
+                        vanished_frame = display
+                elif state.phase == "teleporting":
+                    age = now - state.vanish_started
+                    display = render_teleport(camera_frame, background, mask, speed_lines, age)
+                    if age >= TELEPORT_SECONDS:
                         state.phase = "vanished"
                         vanished_frame = display
                 elif state.phase == "ready":
@@ -835,6 +1059,9 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
                 state.phase = "calibrating"
                 state.calibration_started = now
                 state.vanish_started = None
+                state.reappear_started = None
+                state.released = True
+                pose_timer, pose_reported = PoseTimer(), False
                 log_anchor = None
                 last_mask = None
                 last_mask_at = float("-inf")
@@ -846,16 +1073,21 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
                 if background is not None:
                     state.phase = "ready"
                     state.vanish_started = None
+                    state.reappear_started = None
+                    state.released = True
+                    pose_timer, pose_reported = PoseTimer(), False
                     vanished_frame = None
                     log_anchor = None
                     last_mask = None
                     last_mask_at = float("-inf")
             elif key == ord("v") and background is not None:
-                state.phase = "naruto_vanishing" if mode == "naruto" else "vanishing"
+                state.phase = {"naruto": "naruto_vanishing", "teleport": "teleporting"}.get(mode, "vanishing")
                 state.vanish_started = time.perf_counter()
+                state.released = True
                 if mode == "naruto":
-                    vanish_sound.play()
                     log_anchor = None
+                if vanish_sound is not None:
+                    vanish_sound.play()
                 vanished_frame = None
             elif key == ord("f"):
                 state.fullscreen = not state.fullscreen
