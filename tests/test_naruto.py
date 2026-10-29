@@ -5,12 +5,12 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
-from local_app import vanish_cam as app
-from local_app.naruto_effect import (
+from vanishcam import app
+from vanishcam.effects.naruto import (
     EFFECT_SECONDS, falling_log_anchor, joined_hands_from_landmarks,
     landed_log_anchor, load_log, overlay_log, render_substitution, substitution_anchor,
 )
-from local_app.test_video_output import arguments
+from tests.test_video_output import arguments
 
 
 class JoinedHandsTests(unittest.TestCase):

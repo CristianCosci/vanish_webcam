@@ -7,12 +7,12 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
-from local_app import test_teleport_effect as teleport_tests
-from local_app import tung_effect
-from local_app import vanish_cam as app
-from local_app.teleport_effect import HOLD_SECONDS
-from local_app.test_vanish_cam import hand_points, landmarks
-from local_app.tung_effect import (
+from tests import test_teleport as teleport_tests
+from vanishcam.effects import tung as tung_effect
+from vanishcam import app
+from vanishcam.effects.teleport import HOLD_SECONDS
+from tests.test_gestures import hand_points, landmarks
+from vanishcam.effects.tung import (
     BEAT_SECONDS, RELEASE_AT, RESCUE_SECONDS, SIZES, TUNG_VOICE_PATH, TungSprites,
     beating_anchor, load_tung, render_beating, render_rescue, render_squashed, thumb_down_score,
     voice_path,

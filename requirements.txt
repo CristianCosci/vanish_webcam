@@ -2,4 +2,5 @@ mediapipe==1.2.0
 opencv-contrib-python>=4.14,<6
 numpy>=2.0,<3
 pyvirtualcam>=0.15,<1
-pygame>=2.6,<3
+# Su macOS e Linux i suoni passano da ffplay: pygame lì è inutile e va in conflitto con OpenCV.
+pygame>=2.6,<3; sys_platform == "win32"

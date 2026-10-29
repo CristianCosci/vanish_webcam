@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0\.."
 
 where py >nul 2>nul
 if errorlevel 1 (
@@ -15,17 +15,11 @@ if errorlevel 1 (
   if errorlevel 1 goto :error
 )
 
-if not exist "models\gesture_recognizer.task" goto :models
-if not exist "models\selfie_segmenter_landscape.tflite" goto :models
-goto :build
-
-:models
-echo Scarico i modelli MediaPipe necessari...
-py -3 -c "from vanish_cam import download_models; download_models()"
+echo Scarico i modelli MediaPipe che mancano...
+py -3 -c "from vanishcam.app import MODE_MODELS, download_models; [download_models(mode) for mode in MODE_MODELS]"
 if errorlevel 1 goto :error
 
-:build
-py -3 -m PyInstaller --noconfirm --distpath dist --workpath build VanishCam.spec
+py -3 -m PyInstaller --noconfirm --distpath dist --workpath build windows\VanishCam.spec
 if errorlevel 1 goto :error
 
 "dist\VanishCam.exe" --self-test

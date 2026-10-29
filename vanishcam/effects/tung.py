@@ -9,23 +9,19 @@ from typing import NamedTuple
 import cv2
 import numpy as np
 
-try:
-    from .squash_effect import blend, draw_person, person_top, shake
-except ImportError:
-    from squash_effect import blend, draw_person, person_top, shake
+from ..paths import IMAGES, SOUNDS, VOICES_DIR
+from .squash import blend, draw_person, person_top, shake
 
 
-ASSETS = Path(__file__).resolve().parent / "assets"
-BODY_PATH = ASSETS / "tung_body.png"
-BAT_PATH = ASSETS / "tung_bat.png"
-BURST_PATH = ASSETS / "tung_burst.png"
-PLANE_PATH = ASSETS / "bombardiro.png"
-BEATING_SOUND_PATH = ASSETS / "tung_beating.wav"
-RESCUE_SOUND_PATH = ASSETS / "bombardiro_rescue.wav"
-TUNG_VOICE_PATH = ASSETS / "tung_voice.wav"
-BOMBARDIRO_VOICE_PATH = ASSETS / "bombardiro_voice.wav"
-# Clips dropped here (tung.mp3, bombardiro.mp3, ...) replace the synthesized voices.
-VOICES_DIR = Path(__file__).resolve().parent / "voci"
+BODY_PATH = IMAGES / "tung_body.png"
+BAT_PATH = IMAGES / "tung_bat.png"
+BURST_PATH = IMAGES / "tung_burst.png"
+PLANE_PATH = IMAGES / "bombardiro.png"
+BEATING_SOUND_PATH = SOUNDS / "tung_beating.wav"
+RESCUE_SOUND_PATH = SOUNDS / "bombardiro_rescue.wav"
+TUNG_VOICE_PATH = SOUNDS / "tung_voice.wav"
+BOMBARDIRO_VOICE_PATH = SOUNDS / "bombardiro_voice.wav"
+# Clips in assets/voci (tung.mp3, bombardiro.wav, ...) replace the synthesized voices.
 VOICE_EXTENSIONS = (".mp3", ".wav", ".m4a", ".ogg", ".aac", ".flac")
 
 # Sprite geometry, in pixels of the PNG files.

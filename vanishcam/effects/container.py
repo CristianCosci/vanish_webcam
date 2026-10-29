@@ -3,21 +3,17 @@
 from __future__ import annotations
 
 import math
-from pathlib import Path
 
 import cv2
 import numpy as np
 
-try:
-    from .squash_effect import blend, draw_person, person_top, shake
-except ImportError:
-    from squash_effect import blend, draw_person, person_top, shake
+from ..paths import IMAGES, SOUNDS
+from .squash import blend, draw_person, person_top, shake
 
 
-ASSETS = Path(__file__).resolve().parent / "assets"
-CONTAINER_PATH = ASSETS / "container_40hc.png"
-DROP_SOUND_PATH = ASSETS / "container_drop.wav"
-CRANE_SOUND_PATH = ASSETS / "container_crane.wav"
+CONTAINER_PATH = IMAGES / "container_40hc.png"
+DROP_SOUND_PATH = SOUNDS / "container_drop.wav"
+CRANE_SOUND_PATH = SOUNDS / "container_crane.wav"
 
 CONTAINER_ASPECT = 12.192 / 2.896  # Length over height of a 40' high cube.
 LENGTH_RATIO = 0.94  # Container length relative to the frame width.

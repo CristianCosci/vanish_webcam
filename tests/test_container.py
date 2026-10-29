@@ -5,14 +5,14 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
-from local_app import test_teleport_effect as teleport_tests
-from local_app import vanish_cam as app
-from local_app.container_effect import (
+from tests import test_teleport as teleport_tests
+from vanishcam import app
+from vanishcam.effects.container import (
     DROP_LANDS, DROP_SECONDS, FALL_STARTS, LIFT_RELEASES, LIFT_SECONDS, container_anchor,
     load_container, pointing_up_score, render_drop, render_lift, render_rest,
 )
-from local_app.teleport_effect import HOLD_SECONDS
-from local_app.test_vanish_cam import hand_points, landmarks
+from vanishcam.effects.teleport import HOLD_SECONDS
+from tests.test_gestures import hand_points, landmarks
 
 
 def pointing_up(fingers=(True, False, False, False)):

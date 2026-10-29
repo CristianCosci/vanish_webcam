@@ -5,16 +5,16 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
-from local_app import vanish_cam as app
-from local_app.naruto_effect import (
+from vanishcam import app
+from vanishcam.effects.naruto import (
     EFFECT_SECONDS, landed_log_anchor, load_log, overlay_log, render_return,
 )
-from local_app.teleport_effect import (
+from vanishcam.effects.teleport import (
     HOLD_SECONDS, TELEPORT_SECONDS, PoseTimer, fingers_on_forehead, forehead_from_keypoints,
     make_speed_lines, render_teleport, two_fingers_score,
 )
-from local_app.test_vanish_cam import hand_points, landmarks
-from local_app.test_video_output import arguments
+from tests.test_gestures import hand_points, landmarks
+from tests.test_video_output import arguments
 
 
 FACE = [SimpleNamespace(x=x, y=y) for x, y in (

@@ -1,87 +1,134 @@
-# VanishCam — webcam disappearance effects
+# VanishCam
 
-Fork of [Nicovic17/vanish_webcam](https://github.com/Nicovic17/vanish_webcam) with three new modes (Teleport, Container and Tung Tung Sahur), reappearing with a gesture in every mode, and macOS support.
+Sparisci (e riappari) dalla webcam con un gesto della mano, in diretta, durante le videochiamate. VanishCam riconosce il gesto, separa la tua sagoma dallo sfondo e manda il risultato alla webcam virtuale di OBS, che Teams, Meet, Zoom e le altre app vedono come una webcam qualsiasi.
 
-Video is processed on your computer. It is neither recorded nor sent to a server. The preview window and virtual camera show only the video and effects, without overlaid menus, instructions, or text.
+Il video viene elaborato sul computer: non viene registrato né inviato a nessun server. Nell'uscita ci sono solo il video e gli effetti, senza menu, scritte o istruzioni sovrapposte.
 
-For step-by-step instructions in English and Italian, see the [user guide](USER_GUIDE_EN_IT.md).
+## Le modalità
 
-## ☕ Buy me a coffee
+| | Modalità | Gesto | Cosa succede |
+|---|---|---|---|
+| 1 | **Normal Vanish** | segno a V | ti dissolvi dal basso verso l'alto, con un bordo luminoso |
+| 2 | **Naruto Vanish** | palmi uniti davanti alla webcam | uno sbuffo di fumo e al tuo posto resta un tronco |
+| 3 | **Teletrasporto** | indice e medio uniti sulla fronte, per 1 secondo | linee in stile fumetto, ti stringi in un raggio e sparisci |
+| 4 | **Container** | indice verso l'alto, per 1 secondo | un container Maersk 40' HC ti cade in testa e ti schiaccia, con tonfo, polvere e tremolio |
+| 5 | **Tung Tung Sahur** | pollice verso, per 1 secondo | Tung Tung Tung Sahur arriva con la mazza e a ogni bastonata diventi più piccolo, fino a restare schiacciato a terra |
 
-If you like this project and want to support it, you can buy me a coffee through [PayPal](https://paypal.me/nicovic17) or [Revolut](https://revolut.me/nicoauriemma).
+**Per riapparire** abbassa la mano per mezzo secondo e ripeti il gesto della modalità (dove serve, tenendolo di nuovo per 1 secondo):
 
-## Download for Windows
+- dissolvenza, fumo e teletrasporto si riavvolgono al contrario;
+- nel Container arriva una gru che solleva il container, e tu ti riallunghi da terra con un effetto molla;
+- in Tung Tung Sahur arriva Bombardiro Crocodilo, ti aggancia con un cavo e ti tira su fino all'altezza normale.
 
-[Download VanishCam.exe]( https://nicoaauriemma.vercel.app/shop ) and double-click it to run the app. You do not need to install Python.
+Ogni modalità ha i suoi suoni. Il terminale dice quando il gesto viene riconosciuto; sul video non compare niente.
 
-The published EXE does not include the Teleport, Container and Tung Tung Sahur modes. To use it now, run the local scripts or rebuild the EXE from these sources.
+## Installazione
 
-## Getting started
+### macOS
 
-1. Double-click `AVVIA_LOCALE.bat`.
-2. In the start menu, choose **Normal Vanish**, **Naruto Vanish**, **Teleport**, **Container**, or **Tung Tung Sahur** with the mouse or the `1` to `5` keys.
-3. Step out of the camera frame for 4 seconds while the background is captured. The terminal tells you when you can step back in.
+Servono [Homebrew](https://brew.sh), OBS (solo per la sua webcam virtuale) e `ffmpeg`, che riproduce i suoni:
 
-**Normal Vanish:** Raise your index and middle fingers in a V sign. The dissolve starts as soon as the gesture is recognized and lasts about 3.6 seconds.
-
-**Naruto Vanish:** Bring your palms together in front of the webcam, with your fingers side by side rather than interlaced. Keep both hands visible. As soon as the gesture is recognized, you vanish in a cloud of smoke and a wooden log appears, falls, and remains visible until you reappear. No microphone is needed. Naruto mode uses `hand_landmarker.task` to track both hands. `assets/vanish.MP3` plays through your computer speakers when the disappearance starts, including when triggered with `V`, and again when you reappear.
-
-**Teleport:** Hold your index and middle fingers straight and together against your forehead for 1 second. Animated vertical comic-style lines run across your silhouette, which squeezes into a thin beam and vanishes; the lines linger briefly afterward. If you break the pose, the countdown starts over. `assets/teleport.wav` plays on both disappearance and reappearance. The terminal shows when the pose is recognized. No text is overlaid on the video.
-
-**Container:** Point your index finger up and hold it for 1 second. A light-blue 40' high-cube shipping container drops from above, squashes you flat and lands with a thud, a camera shake and a cloud of dust: only the container is left. `assets/container_drop.wav` plays a falling whistle and the impact.
-
-**Tung Tung Sahur:** Give a thumbs-down and hold it for 1 second. Tung Tung Tung Sahur, a wooden log with a baseball bat, walks in and hits you on the head four times: every hit makes you smaller, with a TUNG! burst and stars, until you are squashed flat on the floor. `assets/tung_beating.wav` plays the knocks and the chant.
-
-**Reappearing:** In every mode, lower your hand for half a second, then repeat the mode's gesture (in Teleport, Container and Tung Tung Sahur mode, hold it for 1 second again). The effect plays in reverse: the dissolve rebuilds you, the smoke swallows the log, or the beam widens back into you. In Container mode a crane lowers its spreader, hooks the container and lifts it away while you stretch back up and spring into shape (`assets/container_crane.wav`). In Tung Tung Sahur mode Bombardiro Crocodilo flies in, lowers a cable onto your squashed self and pulls you back up to full size (`assets/bombardiro_rescue.wav`). `R` still makes you reappear instantly.
-
-To start a mode without the menu:
-
-```powershell
-local_app\AVVIA_LOCALE.bat --mode naruto
-local_app\AVVIA_LOCALE.bat --mode normal
-local_app\AVVIA_LOCALE.bat --mode teleport
-local_app\AVVIA_LOCALE.bat --mode container
-local_app\AVVIA_LOCALE.bat --mode tung
+```sh
+brew install --cask obs
+brew install ffmpeg uv
+git clone https://github.com/CristianCosci/vanish_webcam.git
+cd vanish_webcam
+uv venv --python 3.13
+uv pip install -r requirements.txt
 ```
 
-## Virtual camera and OBS
+La prima volta apri OBS e premi **Avvia fotocamera virtuale**: macOS chiede di consentire l'estensione di sistema. Vai in **Impostazioni di Sistema → Generali → Elementi login ed estensioni**, scorri fino a **Estensioni**, apri **Estensioni fotocamera** (ⓘ) e attiva **OBS Virtual Camera**. Poi ferma la fotocamera virtuale e chiudi OBS: l'uscita la produce VanishCam.
 
-If [OBS Studio](https://obsproject.com/) is installed, the app automatically tries to open **OBS Virtual Camera**. The terminal shows the device name. Use `AVVIA_VIRTUAL.bat` to require a virtual camera. Select **OBS Virtual Camera** in the app that will receive the video. OBS's virtual camera must be stopped while this app is producing its output.
+Per avviare:
 
-To use the effect in an OBS scene, run `AVVIA_OBS.bat`, add a **Window Capture** source, select **Webcam - Anteprima**, and then start the virtual camera from OBS. Alternatively, use [Unity Capture](https://github.com/schellingb/UnityCapture) as a separate virtual video source:
-
-```powershell
-local_app\AVVIA_VIRTUAL.bat --virtual-backend unitycapture
+```sh
+.venv/bin/python vanish_cam.py --virtual-camera --no-mirror
 ```
 
-OBS has only one virtual camera. Do not use it as both an OBS input and output at the same time. See the [pyvirtualcam documentation](https://github.com/letmaik/pyvirtualcam#supported-virtual-cameras).
+### Windows
 
-## Controls
+Fai doppio clic su `windows\avvia.bat`: la prima volta crea l'ambiente Python in `.venv` e installa tutto, poi apre il menu. Le altre due varianti sono:
 
-- `SPACE`: capture a new background.
-- `R`: make the person reappear instantly (or lower your hand and repeat the gesture).
-- `V`: manually start the selected mode's effect.
-- `F`: toggle fullscreen.
-- `Q` or `ESC`: quit and release the cameras.
+- `windows\avvia_virtuale.bat` richiede la webcam virtuale e si ferma con un errore se non c'è;
+- `windows\avvia_obs.bat` mostra solo la finestra di anteprima, da catturare in OBS con una sorgente **Cattura finestra** su **Webcam - Anteprima**.
 
-You can change the camera, resolution, and maximum virtual-output FPS:
+Al posto di OBS si può usare [Unity Capture](https://github.com/schellingb/UnityCapture) con `--virtual-backend unitycapture`.
 
-```powershell
-local_app\AVVIA_LOCALE.bat --camera 1 --width 1280 --height 720 --fps 30
+`windows\build_exe.bat` crea `dist\VanishCam.exe`, un unico eseguibile con modelli, immagini e suoni dentro, che non richiede Python.
+
+## Uso
+
+1. Avvia VanishCam e scegli la modalità dal menu con il mouse o i tasti da `1` a `5`. Per saltare il menu usa `--mode normal`, `naruto`, `teleport`, `container` o `tung`.
+2. Esci dall'inquadratura per 4 secondi mentre VanishCam acquisisce lo sfondo; il terminale ti dice quando rientrare.
+3. Fai il gesto.
+
+### In videochiamata
+
+- Come fotocamera scegli **OBS Virtual Camera**.
+- Spegni sfocatura e sfondi virtuali dell'app di videochiamata: lo sfondo lo gestisce VanishCam.
+- Avvia con `--no-mirror`, così chi ti guarda legge dritte le scritte (ad esempio sul container). Teams mostra a specchio solo la tua anteprima, gli altri ti vedono dritto.
+- I suoni li senti solo tu: la webcam virtuale porta solo il video.
+
+### Tasti nella finestra di anteprima
+
+| Tasto | Azione |
+|---|---|
+| `SPAZIO` | acquisisce di nuovo lo sfondo |
+| `R` | ti fa riapparire subito |
+| `V` | avvia l'effetto senza gesto |
+| `F` | schermo intero |
+| `Q` o `ESC` | esce e libera la webcam |
+
+### Opzioni
+
+| Opzione | |
+|---|---|
+| `--mode MODALITÀ` | salta il menu iniziale |
+| `--camera N` | webcam da usare (predefinita: 0) |
+| `--width`, `--height`, `--fps` | risoluzione e FPS massimi dell'uscita (predefiniti: 960×540, 30) |
+| `--no-mirror` | non specchia l'immagine |
+| `--virtual-camera`, `--no-virtual-camera` | richiede o disattiva la webcam virtuale; senza opzione la usa se c'è |
+| `--virtual-backend`, `--virtual-device` | driver (`obs`, `unitycapture`, `v4l2loopback`) e dispositivo della webcam virtuale |
+| `--fullscreen` | apre l'anteprima a schermo intero |
+| `--gesture-debug` | stampa nel terminale cosa vede il riconoscimento dei gesti, utile se un gesto non parte |
+
+### Voci di Tung Tung Sahur
+
+Le voci originali dei meme sono in `assets/voci` (`tung.wav` e `bombardiro.wav`). Per cambiarle metti al loro posto un file che si chiami `tung` o `bombardiro` (MP3, WAV, M4A, OGG, AAC o FLAC). Se la cartella è vuota, VanishCam usa le voci di riserva in `assets/sounds`, fatte con la sintesi vocale di macOS. Colpi, eliche e "boing" restano comunque sincronizzati con l'animazione.
+
+## Struttura
+
+```text
+vanish_cam.py          avvio (equivale a python -m vanishcam)
+vanishcam/
+  app.py               menu, webcam, riconoscimento dei gesti e ciclo video
+  paths.py             dove si trovano asset e modelli
+  sound.py             riproduzione dei suoni (pygame su Windows, ffplay altrove)
+  effects/
+    naruto.py          fumo e tronco
+    teleport.py        linee e raggio del teletrasporto
+    container.py       container, gru, polvere
+    tung.py            Tung Tung Tung Sahur e Bombardiro Crocodilo
+    squash.py          schiacciare, allungare e scuotere la sagoma
+assets/                immagini, suoni e voci (dettagli in assets/README.md)
+models/                modelli MediaPipe, scaricati al primo avvio
+tests/                 test automatici
+tools/                 script che disegnano le immagini e sintetizzano i suoni
+windows/               avvio, build dell'eseguibile e icona per Windows
 ```
 
-To troubleshoot gesture recognition without adding text to the video, pass `--gesture-debug`. Diagnostic information appears only in the terminal.
+## Sviluppo
 
-## macOS
+I test girano senza webcam:
 
-The `.bat` launchers are Windows-only: on macOS, create a virtual environment and run `vanish_cam.py` directly. Without `pygame`, the Naruto, Teleport, Container and Tung Tung Sahur sounds play through `ffplay`. MediaPipe 1.0.1 aborts on Apple Silicon as soon as it loads the hand models, so `requirements.txt` pins 1.2.0.
+```sh
+.venv/bin/python -m unittest discover -s tests -t .
+```
 
-## Visual assets
+Container, Tung Tung Tung Sahur, Bombardiro Crocodilo e i loro suoni si rigenerano con gli script in `tools/`; l'uso è scritto in cima a ogni script.
 
-The [wooden log](assets/substitution_log.png) is an original illustration generated with ImageGen using the supplied image as a visual reference. Smoke is drawn in real time by `naruto_effect.py` so it follows the person's position and scales with the video. We also considered a [CC0 smoke sprite sheet](https://opengameart.org/content/smoke-sprite-sheet), but the procedural animation adapts better to dynamic positioning without an additional asset. No anime frames or assets are included in the project.
+MediaPipe è fermo alla 1.2.0: con la 1.0.1 su Apple Silicon il modello delle mani manda in crash l'app appena viene caricato.
 
-Teleport mode uses the [MediaPipe BlazeFace short-range model](https://github.com/google-ai-edge/mediapipe/blob/master/mediapipe/tasks/web/vision/README.md) to estimate the forehead position and `hand_landmarker.task` to track the fingers. The teleport's visual trace is drawn in code, without anime frames, and its sound is synthesized (see [assets/README.md](assets/README.md)).
+## Crediti
 
-Container mode uses the MediaPipe gesture recognizer to spot the raised index finger. The [container](assets/container_40hc.png) is a procedural drawing in Maersk livery; the crane, dust and shadows are drawn in real time and the sounds are synthesized (see [assets/README.md](assets/README.md)). Maersk and its seven-pointed star are trademarks of A.P. Møller - Mærsk A/S; this project is not affiliated with or endorsed by Maersk.
-
-Tung Tung Sahur mode uses the same gesture recognizer for the thumbs-down. Tung Tung Tung Sahur and Bombardiro Crocodilo are fan-art drawings of the "Italian brainrot" internet memes, made in code for this project. The `voci` folder holds the original meme voices (`tung.wav` and `bombardiro.wav`, trimmed to the chant and to the name). Replace them with any clip named `tung` or `bombardiro` (MP3, WAV, M4A, OGG, AAC or FLAC): it plays instead of the synthesized macOS voices in `assets/`, which are used when the folder is empty, while knocks, propellers and the boing stay in sync with the animation.
+Le modalità Normal e Naruto e la base dell'app vengono da [vanish_webcam](https://github.com/Nicovic17/vanish_webcam) di Nicovic17.

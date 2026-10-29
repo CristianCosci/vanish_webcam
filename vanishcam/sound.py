@@ -7,8 +7,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from .paths import SOUNDS
 
-SOUND_PATH = Path(__file__).resolve().parent / "assets" / "vanish.MP3"
+
+SOUND_PATH = SOUNDS / "vanish.MP3"
 
 
 class VanishSound:

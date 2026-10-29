@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 
 import cv2
 import numpy as np
+
+from ..paths import SOUNDS
 
 
 HOLD_SECONDS = 1.0
@@ -15,7 +16,7 @@ TELEPORT_SECONDS = 0.85
 SQUEEZE_STARTS = 0.30
 TELEPORT_GONE_AT = 0.42
 BEAM_SECONDS = 0.16
-TELEPORT_SOUND_PATH = Path(__file__).resolve().parent / "assets" / "teleport.wav"
+TELEPORT_SOUND_PATH = SOUNDS / "teleport.wav"
 LINE_COLOR = np.array((255, 244, 214), dtype=np.float32)  # BGR: white with a cyan tint.
 
 

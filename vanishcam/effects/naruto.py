@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import math
-from pathlib import Path
 
 import cv2
 import numpy as np
 
+from ..paths import IMAGES
+
 
 EFFECT_SECONDS = 1.45
-LOG_PATH = Path(__file__).resolve().parent / "assets" / "substitution_log.png"
+LOG_PATH = IMAGES / "substitution_log.png"
 
 
 def joined_hands_from_landmarks(hands, width: int, height: int) -> bool:
