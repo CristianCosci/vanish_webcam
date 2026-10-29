@@ -1,32 +1,32 @@
 # VanishCam
 
-Sparisci (e riappari) dalla webcam con un gesto della mano, in diretta, durante le videochiamate. VanishCam riconosce il gesto, separa la tua sagoma dallo sfondo e manda il risultato alla webcam virtuale di OBS, che Teams, Meet, Zoom e le altre app vedono come una webcam qualsiasi.
+Vanish (and reappear) from your webcam with a hand gesture, live, during video calls. VanishCam recognizes the gesture, separates your silhouette from the background and sends the result to the OBS virtual camera, which Teams, Meet, Zoom and other apps see as a regular webcam.
 
-Il video viene elaborato sul computer: non viene registrato né inviato a nessun server. Nell'uscita ci sono solo il video e gli effetti, senza menu, scritte o istruzioni sovrapposte.
+Video is processed on your computer: it is never recorded or sent to a server. The output contains only the video and the effects, with no menus, text or instructions on top. The app's menu and terminal messages are in Italian.
 
-## Le modalità
+## Modes
 
-| | Modalità | Gesto | Cosa succede |
+| | Mode | Gesture | What happens |
 |---|---|---|---|
-| 1 | **Normal Vanish** | segno a V | ti dissolvi dal basso verso l'alto, con un bordo luminoso |
-| 2 | **Naruto Vanish** | palmi uniti davanti alla webcam | uno sbuffo di fumo e al tuo posto resta un tronco |
-| 3 | **Teletrasporto** | indice e medio uniti sulla fronte, per 1 secondo | linee in stile fumetto, ti stringi in un raggio e sparisci |
-| 4 | **Container** | indice verso l'alto, per 1 secondo | un container Maersk 40' HC ti cade in testa e ti schiaccia, con tonfo, polvere e tremolio |
-| 5 | **Tung Tung Sahur** | pollice verso, per 1 secondo | Tung Tung Tung Sahur arriva con la mazza e a ogni bastonata diventi più piccolo, fino a restare schiacciato a terra |
+| 1 | **Normal Vanish** | V sign | you dissolve from the bottom up behind a glowing edge |
+| 2 | **Naruto Vanish** | palms together in front of the webcam | a puff of smoke, and a wooden log is left in your place |
+| 3 | **Teleport** (*Teletrasporto*) | index and middle fingers together on your forehead, for 1 second | comic-style speed lines, you squeeze into a beam and vanish |
+| 4 | **Container** | index finger pointing up, for 1 second | a Maersk 40' HC container falls on your head and flattens you, with a thud, dust and a camera shake |
+| 5 | **Tung Tung Sahur** | thumbs down, for 1 second | Tung Tung Tung Sahur walks in with his bat and every hit makes you smaller, until you are squashed flat on the floor |
 
-**Per riapparire** abbassa la mano per mezzo secondo e ripeti il gesto della modalità (dove serve, tenendolo di nuovo per 1 secondo):
+**To reappear**, lower your hand for half a second and repeat the mode's gesture (holding it for 1 second again where needed):
 
-- dissolvenza, fumo e teletrasporto si riavvolgono al contrario;
-- nel Container arriva una gru che solleva il container, e tu ti riallunghi da terra con un effetto molla;
-- in Tung Tung Sahur arriva Bombardiro Crocodilo, ti aggancia con un cavo e ti tira su fino all'altezza normale.
+- the dissolve, the smoke and the teleport play in reverse;
+- in Container mode a crane lifts the container away and you stretch back up from the floor with a springy bounce;
+- in Tung Tung Sahur mode Bombardiro Crocodilo flies in, hooks you with a cable and pulls you back up to full size.
 
-Ogni modalità ha i suoi suoni. Il terminale dice quando il gesto viene riconosciuto; sul video non compare niente.
+Every mode has its own sounds. The terminal tells you when a gesture is recognized; nothing appears on the video.
 
-## Installazione
+## Installation
 
 ### macOS
 
-Servono [Homebrew](https://brew.sh), OBS (solo per la sua webcam virtuale) e `ffmpeg`, che riproduce i suoni:
+You need [Homebrew](https://brew.sh), OBS (only for its virtual camera) and `ffmpeg`, which plays the sounds:
 
 ```sh
 brew install --cask obs
@@ -37,9 +37,9 @@ uv venv --python 3.13
 uv pip install -r requirements.txt
 ```
 
-La prima volta apri OBS e premi **Avvia fotocamera virtuale**: macOS chiede di consentire l'estensione di sistema. Vai in **Impostazioni di Sistema → Generali → Elementi login ed estensioni**, scorri fino a **Estensioni**, apri **Estensioni fotocamera** (ⓘ) e attiva **OBS Virtual Camera**. Poi ferma la fotocamera virtuale e chiudi OBS: l'uscita la produce VanishCam.
+The first time, open OBS and click **Start Virtual Camera**: macOS asks you to allow a system extension. Go to **System Settings → General → Login Items & Extensions**, scroll down to **Extensions**, open **Camera Extensions** (ⓘ) and turn on **OBS Virtual Camera**. Then stop the virtual camera and quit OBS: VanishCam produces the output itself.
 
-Per avviare:
+To start:
 
 ```sh
 .venv/bin/python vanish_cam.py --virtual-camera --no-mirror
@@ -47,88 +47,88 @@ Per avviare:
 
 ### Windows
 
-Fai doppio clic su `windows\avvia.bat`: la prima volta crea l'ambiente Python in `.venv` e installa tutto, poi apre il menu. Le altre due varianti sono:
+Double-click `windows\avvia.bat`: the first time it creates the Python environment in `.venv` and installs everything, then it opens the menu. There are two variants:
 
-- `windows\avvia_virtuale.bat` richiede la webcam virtuale e si ferma con un errore se non c'è;
-- `windows\avvia_obs.bat` mostra solo la finestra di anteprima, da catturare in OBS con una sorgente **Cattura finestra** su **Webcam - Anteprima**.
+- `windows\avvia_virtuale.bat` requires the virtual camera and stops with an error if it is missing;
+- `windows\avvia_obs.bat` only shows the preview window, to be captured in OBS with a **Window Capture** source on **Webcam - Anteprima**.
 
-Al posto di OBS si può usare [Unity Capture](https://github.com/schellingb/UnityCapture) con `--virtual-backend unitycapture`.
+Instead of OBS you can use [Unity Capture](https://github.com/schellingb/UnityCapture) with `--virtual-backend unitycapture`.
 
-`windows\build_exe.bat` crea `dist\VanishCam.exe`, un unico eseguibile con modelli, immagini e suoni dentro, che non richiede Python.
+`windows\build_exe.bat` builds `dist\VanishCam.exe`, a single executable with the models, images and sounds inside, which does not need Python.
 
-## Uso
+## Usage
 
-1. Avvia VanishCam e scegli la modalità dal menu con il mouse o i tasti da `1` a `5`. Per saltare il menu usa `--mode normal`, `naruto`, `teleport`, `container` o `tung`.
-2. Esci dall'inquadratura per 4 secondi mentre VanishCam acquisisce lo sfondo; il terminale ti dice quando rientrare.
-3. Fai il gesto.
+1. Start VanishCam and pick a mode from the menu with the mouse or the `1` to `5` keys. To skip the menu, use `--mode normal`, `naruto`, `teleport`, `container` or `tung`.
+2. Step out of the frame for 4 seconds while VanishCam captures the background; the terminal tells you when to step back in.
+3. Make the gesture.
 
-### In videochiamata
+### In a video call
 
-- Come fotocamera scegli **OBS Virtual Camera**.
-- Spegni sfocatura e sfondi virtuali dell'app di videochiamata: lo sfondo lo gestisce VanishCam.
-- Avvia con `--no-mirror`, così chi ti guarda legge dritte le scritte (ad esempio sul container). Teams mostra a specchio solo la tua anteprima, gli altri ti vedono dritto.
-- I suoni li senti solo tu: la webcam virtuale porta solo il video.
+- Select **OBS Virtual Camera** as your camera.
+- Turn off background blur and virtual backgrounds in the call app: VanishCam handles the background.
+- Start with `--no-mirror`, so that people watching you read text the right way round (for example on the container). Teams mirrors only your own preview; everyone else sees you unmirrored.
+- Only you hear the sounds: the virtual camera carries video only.
 
-### Tasti nella finestra di anteprima
+### Keys in the preview window
 
-| Tasto | Azione |
+| Key | Action |
 |---|---|
-| `SPAZIO` | acquisisce di nuovo lo sfondo |
-| `R` | ti fa riapparire subito |
-| `V` | avvia l'effetto senza gesto |
-| `F` | schermo intero |
-| `Q` o `ESC` | esce e libera la webcam |
+| `SPACE` | capture the background again |
+| `R` | reappear instantly |
+| `V` | start the effect without the gesture |
+| `F` | toggle fullscreen |
+| `Q` or `ESC` | quit and release the webcam |
 
-### Opzioni
+### Options
 
-| Opzione | |
+| Option | |
 |---|---|
-| `--mode MODALITÀ` | salta il menu iniziale |
-| `--camera N` | webcam da usare (predefinita: 0) |
-| `--width`, `--height`, `--fps` | risoluzione e FPS massimi dell'uscita (predefiniti: 960×540, 30) |
-| `--no-mirror` | non specchia l'immagine |
-| `--virtual-camera`, `--no-virtual-camera` | richiede o disattiva la webcam virtuale; senza opzione la usa se c'è |
-| `--virtual-backend`, `--virtual-device` | driver (`obs`, `unitycapture`, `v4l2loopback`) e dispositivo della webcam virtuale |
-| `--fullscreen` | apre l'anteprima a schermo intero |
-| `--gesture-debug` | stampa nel terminale cosa vede il riconoscimento dei gesti, utile se un gesto non parte |
+| `--mode MODE` | skip the start menu |
+| `--camera N` | webcam to use (default: 0) |
+| `--width`, `--height`, `--fps` | output resolution and maximum FPS (defaults: 960×540, 30) |
+| `--no-mirror` | do not mirror the image |
+| `--virtual-camera`, `--no-virtual-camera` | require or disable the virtual camera; by default it is used when available |
+| `--virtual-backend`, `--virtual-device` | virtual camera driver (`obs`, `unitycapture`, `v4l2loopback`) and device |
+| `--fullscreen` | open the preview in fullscreen |
+| `--gesture-debug` | print what gesture recognition sees in the terminal, useful when a gesture does not trigger |
 
-### Voci di Tung Tung Sahur
+### Tung Tung Sahur voices
 
-Le voci originali dei meme sono in `assets/voci` (`tung.wav` e `bombardiro.wav`). Per cambiarle metti al loro posto un file che si chiami `tung` o `bombardiro` (MP3, WAV, M4A, OGG, AAC o FLAC). Se la cartella è vuota, VanishCam usa le voci di riserva in `assets/sounds`, fatte con la sintesi vocale di macOS. Colpi, eliche e "boing" restano comunque sincronizzati con l'animazione.
+The original meme voices are in `assets/voci` (`tung.wav` and `bombardiro.wav`). To change them, replace them with a file named `tung` or `bombardiro` (MP3, WAV, M4A, OGG, AAC or FLAC). When the folder is empty, VanishCam uses the fallback voices in `assets/sounds`, made with the macOS speech synthesizer. Knocks, propellers and the "boing" always stay in sync with the animation.
 
-## Struttura
+## Project layout
 
 ```text
-vanish_cam.py          avvio (equivale a python -m vanishcam)
+vanish_cam.py          entry point (same as python -m vanishcam)
 vanishcam/
-  app.py               menu, webcam, riconoscimento dei gesti e ciclo video
-  paths.py             dove si trovano asset e modelli
-  sound.py             riproduzione dei suoni (pygame su Windows, ffplay altrove)
+  app.py               menu, webcam, gesture recognition and video loop
+  paths.py             where assets and models live
+  sound.py             sound playback (pygame on Windows, ffplay elsewhere)
   effects/
-    naruto.py          fumo e tronco
-    teleport.py        linee e raggio del teletrasporto
-    container.py       container, gru, polvere
-    tung.py            Tung Tung Tung Sahur e Bombardiro Crocodilo
-    squash.py          schiacciare, allungare e scuotere la sagoma
-assets/                immagini, suoni e voci (dettagli in assets/README.md)
-models/                modelli MediaPipe, scaricati al primo avvio
-tests/                 test automatici
-tools/                 script che disegnano le immagini e sintetizzano i suoni
-windows/               avvio, build dell'eseguibile e icona per Windows
+    naruto.py          smoke and log
+    teleport.py        teleport lines and beam
+    container.py       container, crane, dust
+    tung.py            Tung Tung Tung Sahur and Bombardiro Crocodilo
+    squash.py          squashing, stretching and shaking the silhouette
+assets/                images, sounds and voices (details in assets/README.md)
+models/                MediaPipe models, downloaded on first run
+tests/                 automated tests
+tools/                 scripts that draw the images and synthesize the sounds
+windows/               Windows launchers, executable build and icon
 ```
 
-## Sviluppo
+## Development
 
-I test girano senza webcam:
+The tests run without a webcam:
 
 ```sh
 .venv/bin/python -m unittest discover -s tests -t .
 ```
 
-Container, Tung Tung Tung Sahur, Bombardiro Crocodilo e i loro suoni si rigenerano con gli script in `tools/`; l'uso è scritto in cima a ogni script.
+The container, Tung Tung Tung Sahur, Bombardiro Crocodilo and their sounds can be regenerated with the scripts in `tools/`; usage is at the top of each script.
 
-MediaPipe è fermo alla 1.2.0: con la 1.0.1 su Apple Silicon il modello delle mani manda in crash l'app appena viene caricato.
+MediaPipe is pinned to 1.2.0: with 1.0.1 on Apple Silicon the hand model crashes the app as soon as it loads.
 
-## Crediti
+## Credits
 
-Le modalità Normal e Naruto e la base dell'app vengono da [vanish_webcam](https://github.com/Nicovic17/vanish_webcam) di Nicovic17.
+The Normal and Naruto modes and the base of the app come from [vanish_webcam](https://github.com/Nicovic17/vanish_webcam) by Nicovic17.

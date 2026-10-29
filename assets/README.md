@@ -1,32 +1,32 @@
-# Immagini e suoni
+# Images and sounds
 
 ## `images/`
 
-| File | Cosa è |
+| File | What it is |
 |---|---|
-| `substitution_log.png` | Il tronco della modalità Naruto, un'illustrazione con sfondo trasparente. |
-| `container_40hc.png` | La fiancata di un container 40' high cube azzurro (12,192 × 2,896 m): lamiera ondulata, longheroni, blocchi d'angolo, strisce gialle e nere da high cube, stella e scritta MAERSK, matricola ISO 6346 `MSKU 471225 1` con cifra di controllo valida, `45G1` e `9'6"`. |
-| `tung_body.png` | Tung Tung Tung Sahur senza il braccio della mazza. Piedi in (210, 975), spalla in (332, 450). |
-| `tung_bat.png` | Braccio e mazza, orizzontali, con la spalla in (30, 60): l'app li ruota attorno alla spalla. |
-| `tung_burst.png` | Il fumetto "TUNG!" che compare a ogni bastonata. |
-| `bombardiro.png` | Bombardiro Crocodilo rivolto a sinistra; il cavo parte dall'anello in (590, 303). |
+| `substitution_log.png` | The Naruto mode log, an illustration with a transparent background. |
+| `container_40hc.png` | The side of a light-blue 40' high-cube container (12.192 × 2.896 m): corrugated panels, rails, corner castings, yellow and black high-cube stripes, the star and MAERSK lettering, ISO 6346 number `MSKU 471225 1` with a valid check digit, `45G1` and `9'6"`. |
+| `tung_body.png` | Tung Tung Tung Sahur without the bat arm. Feet at (210, 975), shoulder at (332, 450). |
+| `tung_bat.png` | Arm and bat, horizontal, with the shoulder at (30, 60): the app rotates them around the shoulder. |
+| `tung_burst.png` | The "TUNG!" burst shown on every hit. |
+| `bombardiro.png` | Bombardiro Crocodilo facing left; the cable hangs from the ring at (590, 303). |
 
-Container, Tung Tung Tung Sahur, il fumetto e Bombardiro Crocodilo sono disegnati via codice dagli script in [`tools/`](../tools). Fumo, linee del teletrasporto, gru, polvere, gancio e stelline vengono disegnati in tempo reale dall'app, così seguono la persona e si adattano a ogni risoluzione.
+The container, Tung Tung Tung Sahur, the burst and Bombardiro Crocodilo are drawn in code by the scripts in [`tools/`](../tools). Smoke, teleport lines, crane, dust, hook and stars are drawn live by the app, so they follow the person and fit any resolution.
 
 ## `sounds/`
 
-| File | Quando suona |
+| File | When it plays |
 |---|---|
-| `vanish.MP3` | Naruto, alla sparizione e al ritorno. |
-| `teleport.wav` | Teletrasporto: sweep da 300 a 1800 Hz, fruscio e un clic quando sparisci. |
-| `container_drop.wav` | Container: fischio di caduta, poi tonfo metallico e piccoli rimbalzi. |
-| `container_crane.wav` | Gru: argano, aggancio dello spreader, due clic dei twistlock, argano in salita e "boing". |
-| `tung_beating.wav` | Tung Tung Sahur: passi di legno, colpi di tamburo di legno e fruscii delle bastonate. |
-| `bombardiro_rescue.wav` | Bombardiro Crocodilo: eliche, verricello, gancio, cigolio dell'allungamento e "boing". |
-| `tung_voice.wav`, `bombardiro_voice.wav` | Voci di riserva, con la sintesi vocale di macOS: Damayanti abbassata per "tung" e "sahur", Rocko per "Bombardiro Crocodilo!". |
+| `vanish.MP3` | Naruto, when you vanish and when you come back. |
+| `teleport.wav` | Teleport: a sweep from 300 to 1800 Hz, a whoosh and a click when you vanish. |
+| `container_drop.wav` | Container: a falling whistle, then a metallic thud and small rattles. |
+| `container_crane.wav` | Crane: winch, spreader landing, two twistlock clicks, winch going up and a "boing". |
+| `tung_beating.wav` | Tung Tung Sahur: wooden footsteps, wooden drum knocks and the swishes of the bat. |
+| `bombardiro_rescue.wav` | Bombardiro Crocodilo: propellers, winch, hook, a stretching squeak and a "boing". |
+| `tung_voice.wav`, `bombardiro_voice.wav` | Fallback voices from the macOS speech synthesizer: Damayanti, pitched down, for "tung" and "sahur", Rocko for "Bombardiro Crocodilo!". |
 
-I suoni partono circa 60 ms prima dell'animazione per compensare il ritardo di avvio di `ffplay`. Effetti e voci di Tung Tung Sahur suonano insieme e condividono lo stesso guadagno, così sommati non distorcono.
+Sounds start about 60 ms ahead of the animation to make up for the start-up delay of `ffplay`. The Tung Tung Sahur effects and voices play together and share one gain, so they do not clip when mixed.
 
 ## `voci/`
 
-Le voci originali dei meme: `tung.wav` (nove "tung" e "sahur") e `bombardiro.wav` (solo "Bombardiro Crocodilo"). Se in questa cartella c'è un file che si chiama `tung` o `bombardiro` (MP3, WAV, M4A, OGG, AAC o FLAC), l'app lo usa al posto della voce di riserva in `sounds/`.
+The original meme voices: `tung.wav` (nine "tung" and a "sahur") and `bombardiro.wav` (just "Bombardiro Crocodilo"). Any file in this folder named `tung` or `bombardiro` (MP3, WAV, M4A, OGG, AAC or FLAC) replaces the fallback voice in `sounds/`.
