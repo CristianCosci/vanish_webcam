@@ -66,3 +66,18 @@ class VanishSound:
         if self.owns_mixer:
             self.mixer.quit()
             self.owns_mixer = False
+
+
+class SoundGroup:
+    """Sounds that start together, such as an effect and its voice track."""
+
+    def __init__(self, *sounds):
+        self.sounds = sounds
+
+    def play(self) -> None:
+        for sound in self.sounds:
+            sound.play()
+
+    def close(self) -> None:
+        for sound in self.sounds:
+            sound.close()

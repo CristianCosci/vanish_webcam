@@ -111,8 +111,8 @@ class ReturnGestureTests(unittest.TestCase):
 
     def test_teleport_needs_the_pose_held_for_one_second(self):
         state = app.AppState(phase="ready")
-        self.assertFalse(app.start_teleport_on_hold(state, HOLD_SECONDS - 0.01, 3.0))
-        self.assertTrue(app.start_teleport_on_hold(state, HOLD_SECONDS, 3.1))
+        self.assertFalse(app.start_on_hold(state, HOLD_SECONDS - 0.01, 3.0, "teleporting"))
+        self.assertTrue(app.start_on_hold(state, HOLD_SECONDS, 3.1, "teleporting"))
         self.assertEqual((state.phase, state.vanish_started), ("teleporting", 3.1))
 
     def test_third_menu_key_selects_teleport(self):
